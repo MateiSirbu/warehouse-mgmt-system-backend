@@ -1,0 +1,31 @@
+{
+  "name": "wms-backend",
+  "version": "1.0.0",
+  "description": "The backend of the Warehouse Management System project.",
+  "main": "index.js",
+  "scripts": {
+    "start": "tsc --noEmit --project . && ts-node-dev src/index --watch",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Matei Sîrbu",
+  "license": "ISC",
+  "dependencies": {
+    "@mikro-orm/core": "^4.3.3",
+    "@mikro-orm/mongodb": "^4.3.3",
+    "@types/body-parser": "^1.19.0",
+    "@types/crypto-js": "^4.0.1",
+    "@types/express": "^4.17.9",
+    "@types/express-jwt": "0.0.42",
+    "@types/jsonwebtoken": "^8.5.0",
+    "@types/jwt-decode": "^3.1.0",
+    "body-parser": "^1.19.0",
+    "crypto-js": "^4.0.0",
+    "express": "^4.17.1",
+    "express-jwt": "^6.0.0",
+    "jsonwebtoken": "^8.5.1",
+    "jwt-decode": "^3.1.2",
+    "ts-node-dev": "^1.0.0",
+    "tslint": "^6.1.3",
+    "typescript": "^4.1.2"
+  }
+}
