@@ -6,5 +6,6 @@ export const env = Object.freeze({
     JWT_PRIVATE_KEY: "src/env/jwt.key",
     TEST_ROUTE: "/test",
     LOGIN_ROUTE: "/login",
-    SIGNUP_ROUTE: "/signup"
+    SIGNUP_ROUTE: "/signup",
+    OOBE_ROUTE: "/oobe"
 })

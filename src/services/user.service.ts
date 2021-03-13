@@ -27,7 +27,6 @@ async function getUserById(em: EntityManager, id: string): Promise<Error | User 
         return Error("Invalid request");
     if (!id || typeof id !== "string")
         return Error("Invalid params");
-
     try {
         const user = em.findOne(User, { id: id });
         return user;
@@ -83,7 +82,7 @@ async function updateUser(em: EntityManager, user: Partial<User>, email: string)
 async function addUser(em: EntityManager, user: Partial<User>): Promise<Error | User> {
     if (!(em instanceof EntityManager))
         return Error("Invalid request");
-    if (!user || typeof user !== "object" || !user.email || !user.firstName || !user.lastName)
+    if (!user || typeof user !== "object" || !user.email || !user.firstName || !user.lastName || !user.email)
         return Error("Invalid params");
     if (await getUserByEmail(em, user.email) != null)
         return Error("E-mail address already associated with an account")
