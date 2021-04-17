@@ -32,7 +32,7 @@ async function getEmployeeByUserId(em: EntityManager, id: string): Promise<Error
         return Error("Invalid params");
 
     try {
-        const employee = em.findOne(Employee, { user: id });
+        const employee = em.findOne(Employee, { user: { id: id } });
         return employee;
     } catch (ex) {
         return ex;
@@ -60,7 +60,7 @@ async function getEmployeeByEmail(em: EntityManager, email: string): Promise<Err
         return Error("Invalid params");
 
     try {
-        const employee = em.findOne(Employee, { user: {email: email} });
+        const employee = em.findOne(Employee, { user: { email: email } });
         return employee;
     } catch (ex) {
         return ex;
@@ -74,7 +74,7 @@ async function removeEmployee(em: EntityManager, email: string): Promise<Error |
         return Error("Invalid params");
 
     try {
-        const employee = await em.findOneOrFail(Employee, { user: {email: email} });
+        const employee = await em.findOneOrFail(Employee, { user: { email: email } });
         await em.removeAndFlush(employee);
     } catch (ex) {
         return ex;
@@ -88,7 +88,7 @@ async function updateEmployee(em: EntityManager, employee: Partial<Employee>, em
         return Error("Invalid params");
 
     try {
-        const editedEmployee = await em.findOneOrFail(Employee, { user: {email: employee.user.email} });
+        const editedEmployee = await em.findOneOrFail(Employee, { user: { email: employee.user.email } });
         wrap(editedEmployee).assign(employee);
         await em.persistAndFlush(editedEmployee);
         return editedEmployee;

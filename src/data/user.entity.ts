@@ -26,11 +26,11 @@ export class User {
     @Property()
     salt!: string;
 
-    @OneToOne({ entity: () => Customer, mappedBy: 'user'})
-    customer!: Customer | null;
+    @OneToOne(() => Customer, customer => customer.user, {owner: true, orphanRemoval: true, eager: true})
+    customer!: Customer;
 
-    @OneToOne({ entity: () => Employee, mappedBy: 'user'})
-    employee!: Employee | null;
+    @OneToOne(() => Employee, employee => employee.user, {owner: true, orphanRemoval: true, eager: true})
+    employee!: Employee;
 
     public constructor(init?: Partial<User>) {
         Object.assign(this, init);

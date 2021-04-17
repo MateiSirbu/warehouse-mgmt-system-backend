@@ -31,7 +31,7 @@ async function getCustomerByUserId(em: EntityManager, id: string): Promise<Error
         return Error("Invalid params");
 
     try {
-        const customer = em.findOne(Customer, { user: id });
+        const customer = em.findOne(Customer, { user: { id: id } });
         return customer;
     } catch (ex) {
         return ex;
@@ -59,7 +59,7 @@ async function getCustomerByEmail(em: EntityManager, email: string): Promise<Err
         return Error("Invalid params");
 
     try {
-        const customer = em.findOne(Customer, { user: {email: email} });
+        const customer = em.findOne(Customer, { user: { email: email } });
         return customer;
     } catch (ex) {
         return ex;
@@ -73,7 +73,7 @@ async function removeCustomer(em: EntityManager, email: string): Promise<Error |
         return Error("Invalid params");
 
     try {
-        const customer = await em.findOneOrFail(Customer, { user: {email: email} });
+        const customer = await em.findOneOrFail(Customer, { user: { email: email } });
         await em.removeAndFlush(customer);
     } catch (ex) {
         return ex;
@@ -87,7 +87,7 @@ async function updateCustomer(em: EntityManager, customer: Partial<Customer>, em
         return Error("Invalid params");
 
     try {
-        const editedCustomer = await em.findOneOrFail(Customer, { user: {email: customer.user.email} });
+        const editedCustomer = await em.findOneOrFail(Customer, { user: { email: customer.user.email } });
         wrap(editedCustomer).assign(customer);
         await em.persistAndFlush(editedCustomer);
         return editedCustomer;
@@ -101,7 +101,7 @@ async function addCustomer(em: EntityManager, customer: Partial<Customer>, email
         return Error("Invalid request");
     if (!customer || typeof customer !== "object")
         return Error("Invalid params");
-        if (await getUserById(em, email) != null)
+    if (await getUserById(em, email) != null)
         return Error("E-mail address already associated with an account")
 
     try {

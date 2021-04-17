@@ -1,24 +1,34 @@
 import { Router, Response, NextFunction } from "express";
 import { EntityManager } from "@mikro-orm/core";
-import * as employeeService from "../services/employee.service";
-import * as userService from "../services/user.service";
 import * as crypto from "crypto-js";
+import * as fs from "fs";
+import { env } from "../env/env";
+import expressjwt from "express-jwt";
+import jwt_decode from "jwt-decode";
 import { IExpressRequest } from "../interfaces/IExpressRequest";
 import { Employee } from "../data/employee.entity";
 import { User } from "../data/user.entity";
 import { Customer } from "../data/customer.entity";
-import { env } from "../env/env";
-import * as fs from "fs";
-import expressjwt from "express-jwt";
-import jwt_decode from "jwt-decode";
+import * as employeeService from "../services/employee.service";
+import * as companyService from "../services/company.service";
+import * as userService from "../services/user.service";
 
 export { setSignUpRoute };
+
+function setSignUpRoute(router: Router): Router {
+    router.post("/", jwtVerify, checkIfAdmin, signUp);
+    router.post("/oobe", signUpOobe);
+    return router;
+}
 
 const jwtVerify = expressjwt({
     secret: fs.readFileSync(env.JWT_PUBLIC_KEY),
     algorithms: ['RS256'],
-    getToken: function fromReqBody(req) {
-        return req.body.idToken;
+    getToken: function fromHeader(req) {
+        if (req.headers.authorization && req.headers.authorization.split(' ')[0] === 'Bearer') {
+            return req.headers.authorization.split(' ')[1];
+        }
+        return null;
     }
 })
 
@@ -27,16 +37,16 @@ async function checkIfAdmin(req: IExpressRequest, res: Response, next: NextFunct
         return next(Error("EntityManager not available"));
 
     let user: Error | User | null = null;
-    let idToken = req.body.idToken;
+    let idToken = req.headers.authorization!.split(' ')[1];
 
     try {
         let decoded: any = jwt_decode(idToken);
         let userId = decoded.sub;
         user = await userService.getUserById(req.em, userId);
         if (user instanceof User) {
-            let employee = await employeeService.getEmployeeByUserId(req.em, user.id);
+            let employee = user.employee
             let isEmployee = employee != null;
-            if (!isEmployee){
+            if (!isEmployee) {
                 res.statusMessage = "You do not have administrative privileges"
                 return res.sendStatus(401);
             }
@@ -57,12 +67,6 @@ async function checkIfAdmin(req: IExpressRequest, res: Response, next: NextFunct
         res.statusMessage = "You do not have administrative privileges"
         return res.sendStatus(401);
     }
-}
-
-function setSignUpRoute(router: Router): Router {
-    router.post("/", jwtVerify, checkIfAdmin, signUp);
-    router.post("/oobe", signUpOobe);
-    return router;
 }
 
 function hashPassword(password: string) {
@@ -87,6 +91,10 @@ async function signUpCustomer(req: IExpressRequest, res: Response, next: NextFun
             salt: saltAndHash.salt
         })
         const customer = new Customer({})
+        const company = await companyService.getCompanyById(req.em, req.body.metadata.id)
+        if (!company || company instanceof Error)
+            return res.status(400).end();
+        customer.company = company
         user.customer = customer
         customer.user = user
         let newUserResponse = await userService.addUser(req.em, user);
@@ -108,16 +116,15 @@ async function signUpOobe(req: IExpressRequest, res: Response, next: NextFunctio
         let saltAndHash = hashPassword(req.body.hash);
 
         try {
+            const employee = new Employee({ isAdmin: true });
             const user = new User({
                 firstName: req.body.firstName,
                 lastName: req.body.lastName,
                 email: req.body.email,
                 hash: saltAndHash.hash,
-                salt: saltAndHash.salt
+                salt: saltAndHash.salt,
+                employee: employee
             })
-            const employee = new Employee({ isAdmin: true })
-            user.employee = employee
-            employee.user = user
             let newUserResponse = await userService.addUser(req.em, user);
             if (newUserResponse instanceof Error) {
                 res.statusMessage = newUserResponse.message
@@ -140,13 +147,6 @@ async function signUpEmployee(req: IExpressRequest, res: Response, next: NextFun
     let saltAndHash = hashPassword(req.body.user.hash);
 
     try {
-        const user = new User({
-            firstName: req.body.user.firstName,
-            lastName: req.body.user.lastName,
-            email: req.body.user.email,
-            hash: saltAndHash.hash,
-            salt: saltAndHash.salt
-        })
         let employee: Employee;
         if (req.body.user.role == 'Administrator') {
             employee = new Employee({ isAdmin: true })
@@ -154,8 +154,14 @@ async function signUpEmployee(req: IExpressRequest, res: Response, next: NextFun
         else {
             employee = new Employee({ isAdmin: false })
         }
-        user.employee = employee
-        employee.user = user
+        const user = new User({
+            firstName: req.body.user.firstName,
+            lastName: req.body.user.lastName,
+            email: req.body.user.email,
+            hash: saltAndHash.hash,
+            salt: saltAndHash.salt,
+            employee: employee
+        })
         let newUserResponse = await userService.addUser(req.em, user);
         if (newUserResponse instanceof Error) {
             res.statusMessage = newUserResponse.message

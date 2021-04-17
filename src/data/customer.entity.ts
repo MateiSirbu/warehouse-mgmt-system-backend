@@ -1,5 +1,6 @@
-import { Entity, SerializedPrimaryKey, PrimaryKey, Property, OneToOne } from "@mikro-orm/core";
+import { Entity, SerializedPrimaryKey, PrimaryKey, Property, OneToOne, ManyToOne } from "@mikro-orm/core";
 import { ObjectId } from "mongodb";
+import { Company } from "./company.entity";
 import { User } from "./user.entity";
 
 @Entity()
@@ -10,10 +11,10 @@ export class Customer {
     @SerializedPrimaryKey()
     id!: string;
 
-    @Property()
-    companyName!: string;
+    @ManyToOne(() => Company)
+    company!: Company;
 
-    @OneToOne({ entity: () => User, inversedBy: 'customer'})
+    @OneToOne(() => User, user => user.customer, { eager: true })
     user!: User;
 
     public constructor(init?: Partial<Customer>) {

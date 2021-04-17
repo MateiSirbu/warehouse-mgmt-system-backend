@@ -4,8 +4,8 @@ export const env = Object.freeze({
     MONGO_DATABASE: "wms",
     JWT_PUBLIC_KEY: "src/env/jwt.pub",
     JWT_PRIVATE_KEY: "src/env/jwt.key",
-    TEST_ROUTE: "/test",
     LOGIN_ROUTE: "/login",
     SIGNUP_ROUTE: "/signup",
-    OOBE_ROUTE: "/oobe"
+    OOBE_ROUTE: "/oobe",
+    COMPANY_ROUTE: "/company"
 })

@@ -42,7 +42,7 @@ async function getUserByEmail(em: EntityManager, email: string): Promise<Error |
         return Error("Invalid params");
 
     try {
-        const user = await em.findOne(User, { email: email });
+        const user = await em.findOne(User, { email: email }, {populate: true});
         return user;
     } catch (ex) {
         return ex;

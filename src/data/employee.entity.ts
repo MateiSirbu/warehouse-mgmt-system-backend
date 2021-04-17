@@ -10,11 +10,11 @@ export class Employee {
     @SerializedPrimaryKey()
     id!: string;
 
+    @OneToOne(() => User, user => user.employee, { eager: true })
+    user!: User;
+
     @Property()
     isAdmin!: boolean;
-
-    @OneToOne({ entity: () => User, inversedBy: 'employee'})
-    user!: User;
 
     public constructor(init?: Partial<Employee>) {
         Object.assign(this, init);
