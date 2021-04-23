@@ -30,6 +30,7 @@ const jwtVerify = expressjwt({
 function setLoginRoute(router: Router): Router {
     router.post("/", login);
     router.get("/userinfo", jwtVerify, getUserInfoFromToken);
+    router.post("/reset", jwtVerify, resetPassword);
     return router;
 }
 
@@ -71,6 +72,44 @@ async function login(req: IExpressRequest, res: Response, next: NextFunction) {
             return res.sendStatus(401).end()
     } catch (ex) {
         return next(ex);
+    }
+}
+
+function hashPassword(password: string) {
+    var salt = crypto.lib.WordArray.random(128).toString(crypto.enc.Hex);
+    var hash = crypto.PBKDF2(password, salt, { keySize: 32, iterations: 10000 }).toString(crypto.enc.Hex);
+
+    return { salt: salt, hash: hash, iterations: 10000 }
+}
+
+async function resetPassword(req: IExpressRequest, res: Response, next: NextFunction) {
+    if (!req.em || !(req.em instanceof EntityManager))
+        return next(Error("EntityManager not available"));
+
+    let user: Error | User | null = null;
+    let idToken = req.headers.authorization!.split(' ')[1];
+
+    try {
+        let decoded: any = jwt_decode(idToken);
+        let userId = decoded.sub;
+        user = await userService.getUserById(req.em, userId);
+        if (user instanceof User) {
+            if (!validateCredentials(user, req.body.oldPassword)) {
+                res.statusMessage = "The current password is incorrect"
+                return res.sendStatus(401)
+            }
+            let saltAndHash = hashPassword(req.body.newPassword)
+            user.salt = saltAndHash.salt
+            user.hash = saltAndHash.hash
+            await userService.updateUser(req.em, user, user.email)
+            return res.status(200).end()
+        } else {
+            res.statusMessage = "You are not logged in"
+            return res.sendStatus(401)
+        }
+    } catch {
+        res.statusMessage = "You are not logged in"
+        return res.sendStatus(401)
     }
 }
 
