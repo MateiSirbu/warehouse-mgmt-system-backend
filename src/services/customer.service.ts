@@ -1,5 +1,7 @@
 import { EntityManager, wrap } from "@mikro-orm/core";
+import { Company } from "../data/company.entity";
 import { Customer } from "../data/customer.entity";
+import { User } from "../data/user.entity";
 import { getUserById } from "./user.service";
 
 export {
@@ -17,7 +19,7 @@ async function getAllCustomers(em: EntityManager): Promise<Error | Customer[]> {
         return Error("Invalid request");
 
     try {
-        const customers = em.find(Customer, {});
+        const customers = await em.find(Customer, {});
         return customers;
     } catch (ex) {
         return ex;
@@ -31,9 +33,13 @@ async function getCustomerByUserId(em: EntityManager, id: string): Promise<Error
         return Error("Invalid params");
 
     try {
-        const customer = em.findOne(Customer, { user: { id: id } });
+        const user = await em.findOne(User, { id: id });
+        const customer = user!.customer
+        const company = await em.findOneOrFail(Company, { id: customer.company.id })
+        customer.company = company
         return customer;
     } catch (ex) {
+        console.log(ex)
         return ex;
     }
 }
@@ -45,9 +51,12 @@ async function getCustomerById(em: EntityManager, id: string): Promise<Error | C
         return Error("Invalid params");
 
     try {
-        const customer = em.findOne(Customer, { id: id });
+        const customer = await em.findOneOrFail(Customer, { id: id });
+        const company = await em.findOneOrFail(Company, { id: customer.company.id })
+        customer.company = company
         return customer;
     } catch (ex) {
+        console.log(ex)
         return ex;
     }
 }
@@ -59,9 +68,13 @@ async function getCustomerByEmail(em: EntityManager, email: string): Promise<Err
         return Error("Invalid params");
 
     try {
-        const customer = em.findOne(Customer, { user: { email: email } });
+        const user = await em.findOne(User, { email: email });
+        const customer = user!.customer
+        const company = await em.findOneOrFail(Company, { id: customer.company.id })
+        customer.company = company
         return customer;
     } catch (ex) {
+        console.log(ex)
         return ex;
     }
 }
@@ -73,9 +86,11 @@ async function removeCustomer(em: EntityManager, email: string): Promise<Error |
         return Error("Invalid params");
 
     try {
-        const customer = await em.findOneOrFail(Customer, { user: { email: email } });
+        const user = await em.findOne(User, { email: email });
+        const customer = user!.customer
         await em.removeAndFlush(customer);
     } catch (ex) {
+        console.log(ex)
         return ex;
     }
 }
@@ -87,11 +102,13 @@ async function updateCustomer(em: EntityManager, customer: Partial<Customer>, em
         return Error("Invalid params");
 
     try {
-        const editedCustomer = await em.findOneOrFail(Customer, { user: { email: customer.user.email } });
+        const user = await em.findOne(User, { email: email });
+        const editedCustomer = user!.customer;
         wrap(editedCustomer).assign(customer);
         await em.persistAndFlush(editedCustomer);
         return editedCustomer;
     } catch (ex) {
+        console.log(ex)
         return ex;
     }
 }
@@ -109,6 +126,7 @@ async function addCustomer(em: EntityManager, customer: Partial<Customer>, email
         await em.persistAndFlush(item);
         return item;
     } catch (ex) {
+        console.log(ex)
         return ex;
     }
 }

@@ -2,7 +2,7 @@ import { Entity, SerializedPrimaryKey, PrimaryKey, Property, Unique } from "@mik
 import { ObjectId } from "mongodb";
 
 @Entity()
-export class Item{
+export class Item {
     @PrimaryKey()
     _id!: ObjectId;
 
@@ -11,6 +11,9 @@ export class Item{
 
     @Unique()
     @Property()
+    sku!: string;
+
+    @Property()
     ean!: string;
 
     @Property()
@@ -18,6 +21,12 @@ export class Item{
 
     @Property()
     uom!: string;
+
+    @Property()
+    price!: number;
+
+    @Property()
+    currency!: string;
 
     public constructor(init?: Partial<Item>) {
         Object.assign(this, init);

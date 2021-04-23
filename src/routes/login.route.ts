@@ -4,7 +4,7 @@ import * as jwt from "jsonwebtoken";
 import expressjwt from "express-jwt";
 import jwt_decode from "jwt-decode";
 import * as crypto from "crypto-js";
-import { EntityManager, Reference } from "@mikro-orm/core";
+import { EntityManager } from "@mikro-orm/core";
 import * as userService from "../services/user.service";
 import * as customerService from "../services/customer.service";
 import * as employeeService from "../services/employee.service";
@@ -12,6 +12,7 @@ import { User } from "../data/user.entity";
 import { env } from "../env/env";
 import { IExpressRequest } from "../interfaces/IExpressRequest";
 import { Employee } from "../data/employee.entity";
+import { Customer } from "../data/customer.entity";
 
 export { setLoginRoute, getUserInfoFromToken };
 
@@ -87,20 +88,21 @@ async function getUserInfoFromToken(req: IExpressRequest, res: Response, next: N
         if (user instanceof User) {
             let employee = await employeeService.getEmployeeByUserId(req.em, user.id);
             let customer = await customerService.getCustomerByUserId(req.em, user.id);
-            let isAdmin = false;
-            let isEmployee = employee != null;
-            let isCustomer = customer != null;
-            if (isEmployee && (employee as Employee).isAdmin)
-                isAdmin = true;
-            return res.json({
+            const isEmployee = (employee != null && employee instanceof Employee);
+            const isCustomer = (customer != null && customer instanceof Customer);
+            let result: any = {
                 id: user.id,
                 firstName: user.firstName,
                 lastName: user.lastName,
                 email: user.email,
                 isEmployee: isEmployee,
                 isCustomer: isCustomer,
-                isAdmin: isAdmin
-            });
+                isAdmin: (isEmployee && (employee as Employee).isAdmin)
+            };
+            if (isCustomer) {
+                result["company"] = (customer as Customer).company
+            }
+            return res.json(result);
         }
     } catch {
         return res.sendStatus(401)

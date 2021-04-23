@@ -1,4 +1,4 @@
-import { Entity, SerializedPrimaryKey, PrimaryKey, Property, OneToOne, ManyToOne } from "@mikro-orm/core";
+import { Entity, SerializedPrimaryKey, PrimaryKey, OneToOne, ManyToOne } from "@mikro-orm/core";
 import { ObjectId } from "mongodb";
 import { Company } from "./company.entity";
 import { User } from "./user.entity";

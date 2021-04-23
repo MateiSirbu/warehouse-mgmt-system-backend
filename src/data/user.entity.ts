@@ -26,10 +26,10 @@ export class User {
     @Property()
     salt!: string;
 
-    @OneToOne(() => Customer, customer => customer.user, {owner: true, orphanRemoval: true, eager: true})
+    @OneToOne(() => Customer, customer => customer.user, { owner: true, eager: true })
     customer!: Customer;
 
-    @OneToOne(() => Employee, employee => employee.user, {owner: true, orphanRemoval: true, eager: true})
+    @OneToOne(() => Employee, employee => employee.user, { owner: true, eager: true })
     employee!: Employee;
 
     public constructor(init?: Partial<User>) {

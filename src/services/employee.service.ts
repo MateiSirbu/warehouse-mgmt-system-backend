@@ -1,5 +1,6 @@
 import { EntityManager, wrap } from "@mikro-orm/core";
 import { Employee } from "../data/employee.entity";
+import { User } from "../data/user.entity";
 import { getUserById } from "./user.service";
 
 export {
@@ -18,9 +19,10 @@ async function getAllEmployees(em: EntityManager): Promise<Error | Employee[]> {
         return Error("Invalid request");
 
     try {
-        const employees = em.find(Employee, {});
+        const employees = await em.find(Employee, {});
         return employees;
     } catch (ex) {
+        console.log(ex)
         return ex;
     }
 }
@@ -32,9 +34,11 @@ async function getEmployeeByUserId(em: EntityManager, id: string): Promise<Error
         return Error("Invalid params");
 
     try {
-        const employee = em.findOne(Employee, { user: { id: id } });
+        const user = await em.findOne(User, { id: id });
+        const employee = user!.employee
         return employee;
     } catch (ex) {
+        console.log(ex)
         return ex;
     }
 }
@@ -46,9 +50,10 @@ async function getEmployeeById(em: EntityManager, id: string): Promise<Error | E
         return Error("Invalid params");
 
     try {
-        const employee = em.findOne(Employee, { id: id });
+        const employee = await em.findOne(Employee, { id: id });
         return employee;
     } catch (ex) {
+        console.log(ex)
         return ex;
     }
 }
@@ -60,9 +65,11 @@ async function getEmployeeByEmail(em: EntityManager, email: string): Promise<Err
         return Error("Invalid params");
 
     try {
-        const employee = em.findOne(Employee, { user: { email: email } });
+        const user = await em.findOne(User, { email: email });
+        const employee = user!.employee
         return employee;
     } catch (ex) {
+        console.log(ex)
         return ex;
     }
 }
@@ -74,9 +81,11 @@ async function removeEmployee(em: EntityManager, email: string): Promise<Error |
         return Error("Invalid params");
 
     try {
-        const employee = await em.findOneOrFail(Employee, { user: { email: email } });
+        const user = await em.findOne(User, { email: email });
+        const employee = user!.employee
         await em.removeAndFlush(employee);
     } catch (ex) {
+        console.log(ex)
         return ex;
     }
 }
@@ -88,11 +97,13 @@ async function updateEmployee(em: EntityManager, employee: Partial<Employee>, em
         return Error("Invalid params");
 
     try {
-        const editedEmployee = await em.findOneOrFail(Employee, { user: { email: employee.user.email } });
+        const user = await em.findOne(User, { email: email });
+        const editedEmployee = user!.employee
         wrap(editedEmployee).assign(employee);
         await em.persistAndFlush(editedEmployee);
         return editedEmployee;
     } catch (ex) {
+        console.log(ex)
         return ex;
     }
 }
@@ -115,6 +126,7 @@ async function addEmployee(em: EntityManager, employee: Partial<Employee>, email
         await em.persistAndFlush(item);
         return item;
     } catch (ex) {
+        console.log(ex)
         return ex;
     }
 }

@@ -1,4 +1,4 @@
-import { Entity, SerializedPrimaryKey, PrimaryKey, Property, OneToOne, OneToMany, ManyToOne, Collection } from "@mikro-orm/core";
+import { Entity, SerializedPrimaryKey, PrimaryKey, Property, OneToMany, Collection, Cascade } from "@mikro-orm/core";
 import { ObjectId } from "mongodb";
 import { Customer } from "./customer.entity";
 
@@ -16,7 +16,7 @@ export class Company {
     @Property()
     address!: string;
 
-    @OneToMany(() => Customer, customer => customer.company, { eager: true })
+    @OneToMany(() => Customer, customer => customer.company, { eager: true, cascade: [Cascade.ALL] })
     representatives = new Collection<Customer>(this);
 
     public constructor(init?: Partial<Company>) {
