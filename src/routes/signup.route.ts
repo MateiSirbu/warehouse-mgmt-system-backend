@@ -94,7 +94,7 @@ async function signUpCustomer(req: IExpressRequest, res: Response, next: NextFun
         const company = await companyService.getCompanyById(req.em, req.body.metadata.id)
         if (!company || company instanceof Error)
             return res.status(400).end();
-        customer.company.id = company.id
+        customer.company = company
         user.customer = customer
         customer.user = user
         let newUserResponse = await userService.addUser(req.em, user);
