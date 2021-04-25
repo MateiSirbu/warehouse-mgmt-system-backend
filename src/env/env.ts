@@ -7,5 +7,6 @@ export const env = Object.freeze({
     LOGIN_ROUTE: "/login",
     SIGNUP_ROUTE: "/signup",
     OOBE_ROUTE: "/oobe",
-    COMPANY_ROUTE: "/company"
+    COMPANY_ROUTE: "/company",
+    ITEM_ROUTE: "/item"
 })

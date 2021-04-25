@@ -8,6 +8,7 @@ import { setSignUpRoute } from "./routes/signup.route";
 import * as bodyParser from "body-parser";
 import { setOobeRoute } from "./routes/oobe.route";
 import { setCompanyRoute } from "./routes/company.route";
+import { setItemRoute } from "./routes/item.route";
 
 let app: express.Application;
 
@@ -32,6 +33,7 @@ const init = function (): express.Application {
     app.use(env.LOGIN_ROUTE, setLoginRoute(express.Router()));
     app.use(env.SIGNUP_ROUTE, setSignUpRoute(express.Router()));
     app.use(env.OOBE_ROUTE, setOobeRoute(express.Router()));
+    app.use(env.ITEM_ROUTE, setItemRoute(express.Router()));
 
     return app;
 }

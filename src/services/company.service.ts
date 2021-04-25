@@ -5,7 +5,7 @@ export { addCompany, editCompany, getCompanyById, getCompanyByName, getAllCompan
 
 async function getAllCompanies(em: EntityManager): Promise<Error | Company[]> {
     if (!(em instanceof EntityManager))
-        return Error("Invalid request");
+        throw Error("Invalid request");
 
     try {
         const companies = em.find(Company, {});
@@ -17,9 +17,10 @@ async function getAllCompanies(em: EntityManager): Promise<Error | Company[]> {
 
 async function getCompanyById(em: EntityManager, id: string): Promise<Error | Company | null> {
     if (!(em instanceof EntityManager))
-        return Error("Invalid request");
+        throw Error("Invalid request");
     if (!id || typeof id !== "string")
-        return Error("Invalid params");
+        throw Error("Malformed input");
+
     try {
         const company = em.findOne(Company, { id: id });
         return company;
@@ -30,9 +31,9 @@ async function getCompanyById(em: EntityManager, id: string): Promise<Error | Co
 
 async function getCompanyByName(em: EntityManager, name: string): Promise<Error | Company | null> {
     if (!(em instanceof EntityManager))
-        return Error("Invalid request");
+        throw Error("Invalid request");
     if (!name || typeof name !== "string")
-        return Error("Invalid params");
+        throw Error("Malformed input");
 
     try {
         const company = await em.findOne(Company, { name: name }, { populate: true });
@@ -44,15 +45,15 @@ async function getCompanyByName(em: EntityManager, name: string): Promise<Error 
 
 async function addCompany(em: EntityManager, company: Partial<Company>): Promise<Error | Company> {
     if (!(em instanceof EntityManager))
-        return Error("Invalid request");
+        throw Error("Invalid request");
     if (!company || typeof company !== "object")
-        return Error("Invalid params");
+        throw Error("Malformed input");
     if (!company.name || company.name == "" || typeof company.name !== "string")
-        return Error("Company name cannot be null.")
+        throw Error("Company name cannot be null")
     if (!company.address || company.address == "" || typeof company.address !== "string")
-        return Error("Address cannot be null.")
+        throw Error("Address cannot be null")
     if (await getCompanyByName(em, company.name!) != null)
-        return Error("Company already exists")
+        throw Error("Company already exists")
 
     try {
         const item = new Company(company);
@@ -63,15 +64,15 @@ async function addCompany(em: EntityManager, company: Partial<Company>): Promise
     }
 }
 
-async function editCompany(em: EntityManager, company: Partial<Company>): Promise<Error | Company>  {
+async function editCompany(em: EntityManager, company: Partial<Company>): Promise<Error | Company> {
     if (!(em instanceof EntityManager))
-        return Error("Invalid request");
+        throw Error("Invalid request");
     if (!company || typeof company !== "object")
-        return Error("Invalid params");
+        throw Error("Malformed input");
     if (!company.name || company.name == "" || typeof company.name !== "string")
-        return Error("Company name cannot be null.")
+        throw Error("Company name cannot be null")
     if (!company.address || company.address == "" || typeof company.address !== "string")
-        return Error("Address cannot be null.")
+        throw Error("Address cannot be null")
 
     try {
         console.log(company)

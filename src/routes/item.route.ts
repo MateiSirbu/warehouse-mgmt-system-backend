@@ -5,12 +5,11 @@ import { env } from "../env/env";
 import { IExpressRequest } from "../interfaces/IExpressRequest";
 import { User } from "../data/user.entity";
 import * as userService from "../services/user.service";
-import * as companyService from "../services/company.service";
+import * as itemService from "../services/item.service";
 import { EntityManager } from "@mikro-orm/core";
 import jwt_decode from "jwt-decode";
-import { Employee } from "../data/employee.entity";
 
-export { setCompanyRoute };
+export { setItemRoute };
 
 const jwtVerify = expressjwt({
     secret: fs.readFileSync(env.JWT_PUBLIC_KEY),
@@ -23,14 +22,14 @@ const jwtVerify = expressjwt({
     }
 });
 
-function setCompanyRoute(router: Router): Router {
-    router.post("/", jwtVerify, checkIfAdmin, addCompany);
-    router.put("/", jwtVerify, checkIfAdmin, editCompany);
-    router.get("/", jwtVerify, checkIfAdmin, getCompanies);
+function setItemRoute(router: Router): Router {
+    router.post("/", jwtVerify, checkIfEmployee, addItem);
+    router.put("/", jwtVerify, checkIfEmployee, editItem);
+    router.get("/", jwtVerify, checkIfEmployee, getItems);
     return router;
 }
 
-async function checkIfAdmin(req: IExpressRequest, res: Response, next: NextFunction) {
+async function checkIfEmployee(req: IExpressRequest, res: Response, next: NextFunction) {
     if (!req.em || !(req.em instanceof EntityManager))
         return next(Error("EntityManager not available"));
 
@@ -45,34 +44,28 @@ async function checkIfAdmin(req: IExpressRequest, res: Response, next: NextFunct
             let employee = user.employee;
             let isEmployee = employee != null;
             if (!isEmployee) {
-                res.statusMessage = "You do not have administrative privileges"
+                res.statusMessage = "You are not logged in as an employee"
                 return res.sendStatus(401);
             }
             else {
-                if ((employee as Employee).isAdmin)
-                    next();
-                else {
-                    res.statusMessage = "You do not have administrative privileges"
-                    return res.sendStatus(401);
-                }
+                return next();
             }
         }
-    } catch (ex) {
-        res.statusMessage = ex.message;
+    } catch {
+        res.statusMessage = "You are not logged in as an employee"
         return res.sendStatus(401);
     }
     if (user instanceof Error || user === null) {
-        res.statusMessage = "You do not have administrative privileges"
+        res.statusMessage = "You are not logged in as an employee"
         return res.sendStatus(401);
     }
 }
 
-async function addCompany(req: IExpressRequest, res: Response, next: NextFunction) {
+async function addItem(req: IExpressRequest, res: Response, next: NextFunction) {
     if (!req.em || !(req.em instanceof EntityManager))
         return next(Error("EntityManager not available"));
-
     try {
-        await companyService.addCompany(req.em, req.body)
+        await itemService.addItem(req.em, req.body)
         return res.status(200).end();
     } catch (ex) {
         res.statusMessage = ex.message;
@@ -80,12 +73,11 @@ async function addCompany(req: IExpressRequest, res: Response, next: NextFunctio
     }
 }
 
-async function editCompany(req: IExpressRequest, res: Response, next: NextFunction) {
+async function editItem(req: IExpressRequest, res: Response, next: NextFunction) {
     if (!req.em || !(req.em instanceof EntityManager))
         return next(Error("EntityManager not available"));
-
     try {
-        await companyService.editCompany(req.em, req.body)
+        await itemService.updateItem(req.em, req.body)
         return res.status(200).end();
     } catch (ex) {
         res.statusMessage = ex.message;
@@ -93,13 +85,13 @@ async function editCompany(req: IExpressRequest, res: Response, next: NextFuncti
     }
 }
 
-async function getCompanies(req: IExpressRequest, res: Response, next: NextFunction) {
+async function getItems(req: IExpressRequest, res: Response, next: NextFunction) {
     if (!req.em || !(req.em instanceof EntityManager))
         return next(Error("EntityManager not available"));
 
     try {
-        const companies = await companyService.getAllCompanies(req.em)
-        return res.status(200).json(companies)
+        const items = await itemService.getAllItems(req.em)
+        return res.status(200).json(items)
     } catch (ex) {
         res.statusMessage = ex.message;
         return res.sendStatus(500);

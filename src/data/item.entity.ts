@@ -14,7 +14,7 @@ export class Item {
     sku!: string;
 
     @Property()
-    ean!: string;
+    ean!: number;
 
     @Property()
     name!: string;
@@ -23,10 +23,10 @@ export class Item {
     uom!: string;
 
     @Property()
-    price!: number;
+    unitprice!: number;
 
     @Property()
-    currency!: string;
+    stock!: number;
 
     public constructor(init?: Partial<Item>) {
         Object.assign(this, init);

@@ -16,7 +16,7 @@ export {
 
 async function getAllCustomers(em: EntityManager): Promise<Error | Customer[]> {
     if (!(em instanceof EntityManager))
-        return Error("Invalid request");
+        throw Error("Invalid request");
 
     try {
         const customers = await em.find(Customer, {});
@@ -28,15 +28,17 @@ async function getAllCustomers(em: EntityManager): Promise<Error | Customer[]> {
 
 async function getCustomerByUserId(em: EntityManager, id: string): Promise<Error | Customer | null> {
     if (!(em instanceof EntityManager))
-        return Error("Invalid request");
+        throw Error("Invalid request");
     if (!id || typeof id !== "string")
-        return Error("Invalid params");
+        throw Error("Malformed input");
 
     try {
         const user = await em.findOne(User, { id: id });
         const customer = user!.customer
-        const company = await em.findOneOrFail(Company, { id: customer.company.id })
-        customer.company = company
+        if (customer != null) {
+            const company = await em.findOneOrFail(Company, { id: customer.company.id })
+            customer.company = company
+        }
         return customer;
     } catch (ex) {
         console.log(ex)
@@ -46,9 +48,9 @@ async function getCustomerByUserId(em: EntityManager, id: string): Promise<Error
 
 async function getCustomerById(em: EntityManager, id: string): Promise<Error | Customer | null> {
     if (!(em instanceof EntityManager))
-        return Error("Invalid request");
+        throw Error("Invalid request");
     if (!id || typeof id !== "string")
-        return Error("Invalid params");
+        throw Error("Malformed input");
 
     try {
         const customer = await em.findOneOrFail(Customer, { id: id });
@@ -63,15 +65,17 @@ async function getCustomerById(em: EntityManager, id: string): Promise<Error | C
 
 async function getCustomerByEmail(em: EntityManager, email: string): Promise<Error | Customer | null> {
     if (!(em instanceof EntityManager))
-        return Error("Invalid request");
+        throw Error("Invalid request");
     if (!email || typeof email !== "string")
-        return Error("Invalid params");
+        throw Error("Malformed input");
 
     try {
         const user = await em.findOne(User, { email: email });
         const customer = user!.customer
-        const company = await em.findOneOrFail(Company, { id: customer.company.id })
-        customer.company = company
+        if (customer != null) {
+            const company = await em.findOneOrFail(Company, { id: customer.company.id })
+            customer.company = company
+        }
         return customer;
     } catch (ex) {
         console.log(ex)
@@ -81,9 +85,9 @@ async function getCustomerByEmail(em: EntityManager, email: string): Promise<Err
 
 async function removeCustomer(em: EntityManager, email: string): Promise<Error | void> {
     if (!(em instanceof EntityManager))
-        return Error("Invalid request");
+        throw Error("Invalid request");
     if (!email || typeof email !== "string")
-        return Error("Invalid params");
+        throw Error("Malformed input");
 
     try {
         const user = await em.findOne(User, { email: email });
@@ -97,9 +101,9 @@ async function removeCustomer(em: EntityManager, email: string): Promise<Error |
 
 async function updateCustomer(em: EntityManager, customer: Partial<Customer>, email: string): Promise<Error | Customer> {
     if (!(em instanceof EntityManager))
-        return Error("Invalid request");
+        throw Error("Invalid request");
     if (!customer || !customer.user || typeof customer !== "object" || typeof customer.user !== "object" || !customer.user?.email || email !== customer.user.email)
-        return Error("Invalid params");
+        throw Error("Malformed input");
 
     try {
         const user = await em.findOne(User, { email: email });
@@ -115,11 +119,11 @@ async function updateCustomer(em: EntityManager, customer: Partial<Customer>, em
 
 async function addCustomer(em: EntityManager, customer: Partial<Customer>, email: string): Promise<Error | Customer> {
     if (!(em instanceof EntityManager))
-        return Error("Invalid request");
+        throw Error("Invalid request");
     if (!customer || typeof customer !== "object")
-        return Error("Invalid params");
+        throw Error("Malformed input");
     if (await getUserById(em, email) != null)
-        return Error("E-mail address already associated with an account")
+        throw Error("E-mail address already associated with an account")
 
     try {
         const item = new Customer(customer);

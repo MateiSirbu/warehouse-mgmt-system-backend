@@ -12,7 +12,7 @@ export {
 
 async function getAllUsers(em: EntityManager): Promise<Error | User[]> {
     if (!(em instanceof EntityManager))
-        return Error("Invalid request");
+        throw Error("Invalid request");
 
     try {
         const users = em.find(User, {});
@@ -24,9 +24,9 @@ async function getAllUsers(em: EntityManager): Promise<Error | User[]> {
 
 async function getUserById(em: EntityManager, id: string): Promise<Error | User | null> {
     if (!(em instanceof EntityManager))
-        return Error("Invalid request");
+        throw Error("Invalid request");
     if (!id || typeof id !== "string")
-        return Error("Invalid params");
+        throw Error("Invalid params");
     try {
         const user = em.findOne(User, { id: id });
         return user;
@@ -37,12 +37,12 @@ async function getUserById(em: EntityManager, id: string): Promise<Error | User 
 
 async function getUserByEmail(em: EntityManager, email: string): Promise<Error | User | null> {
     if (!(em instanceof EntityManager))
-        return Error("Invalid request");
+        throw Error("Invalid request");
     if (!email || typeof email !== "string")
-        return Error("Invalid params");
+        throw Error("Invalid params");
 
     try {
-        const user = await em.findOne(User, { email: email }, {populate: true});
+        const user = await em.findOne(User, { email: email }, { populate: true });
         return user;
     } catch (ex) {
         return ex;
@@ -51,9 +51,9 @@ async function getUserByEmail(em: EntityManager, email: string): Promise<Error |
 
 async function removeUser(em: EntityManager, email: string): Promise<Error | void> {
     if (!(em instanceof EntityManager))
-        return Error("Invalid request");
+        throw Error("Invalid request");
     if (!email || typeof email !== "string")
-        return Error("Invalid params");
+        throw Error("Invalid params");
 
     try {
         const user = await em.findOneOrFail(User, { email: email });
@@ -65,9 +65,9 @@ async function removeUser(em: EntityManager, email: string): Promise<Error | voi
 
 async function updateUser(em: EntityManager, user: Partial<User>, email: string): Promise<Error | User> {
     if (!(em instanceof EntityManager))
-        return Error("Invalid request");
+        throw Error("Invalid request");
     if (!user || typeof user !== "object" || !user.email || email !== user.email)
-        return Error("Invalid params");
+        throw Error("Invalid params");
 
     try {
         const editedUser = await em.findOneOrFail(User, { email: user.email });
@@ -81,11 +81,11 @@ async function updateUser(em: EntityManager, user: Partial<User>, email: string)
 
 async function addUser(em: EntityManager, user: Partial<User>): Promise<Error | User> {
     if (!(em instanceof EntityManager))
-        return Error("Invalid request");
+        throw Error("Invalid request");
     if (!user || typeof user !== "object" || !user.email || !user.firstName || !user.lastName || !user.email)
-        return Error("Invalid params");
+        throw Error("Invalid params");
     if (await getUserByEmail(em, user.email) != null)
-        return Error("E-mail address already associated with an account")
+        throw Error("E-mail address already associated with an account")
 
     try {
         const item = new User(user);
