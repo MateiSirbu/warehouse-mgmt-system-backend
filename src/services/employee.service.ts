@@ -23,7 +23,7 @@ async function getAllEmployees(em: EntityManager): Promise<Error | Employee[]> {
         return employees;
     } catch (ex) {
         console.log(ex)
-        return ex;
+        throw ex;
     }
 }
 
@@ -39,7 +39,7 @@ async function getEmployeeByUserId(em: EntityManager, id: string): Promise<Error
         return employee;
     } catch (ex) {
         console.log(ex)
-        return ex;
+        throw ex;
     }
 }
 
@@ -54,7 +54,7 @@ async function getEmployeeById(em: EntityManager, id: string): Promise<Error | E
         return employee;
     } catch (ex) {
         console.log(ex)
-        return ex;
+        throw ex;
     }
 }
 
@@ -70,7 +70,7 @@ async function getEmployeeByEmail(em: EntityManager, email: string): Promise<Err
         return employee;
     } catch (ex) {
         console.log(ex)
-        return ex;
+        throw ex;
     }
 }
 
@@ -86,7 +86,7 @@ async function removeEmployee(em: EntityManager, email: string): Promise<Error |
         await em.removeAndFlush(employee);
     } catch (ex) {
         console.log(ex)
-        return ex;
+        throw ex;
     }
 }
 
@@ -104,7 +104,7 @@ async function updateEmployee(em: EntityManager, employee: Partial<Employee>, em
         return editedEmployee;
     } catch (ex) {
         console.log(ex)
-        return ex;
+        throw ex;
     }
 }
 
@@ -127,6 +127,6 @@ async function addEmployee(em: EntityManager, employee: Partial<Employee>, email
         return item;
     } catch (ex) {
         console.log(ex)
-        return ex;
+        throw ex;
     }
 }

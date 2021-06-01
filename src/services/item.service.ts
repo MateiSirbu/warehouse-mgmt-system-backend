@@ -18,7 +18,7 @@ async function getAllItems(em: EntityManager): Promise<Error | Item[]> {
         return items;
     } catch (ex) {
         console.log(ex)
-        return ex;
+        throw ex;
     }
 }
 
@@ -32,7 +32,7 @@ async function getItemById(em: EntityManager, id: string): Promise<Error | Item 
         return item;
     } catch (ex) {
         console.log(ex)
-        return ex;
+        throw ex;
     }
 }
 
@@ -47,7 +47,7 @@ async function getItemBySKU(em: EntityManager, sku: string): Promise<Error | Ite
         return item;
     } catch (ex) {
         console.log(ex)
-        return ex;
+        throw ex;
     }
 }
 
@@ -64,7 +64,7 @@ async function updateItem(em: EntityManager, item: Partial<Item>): Promise<Error
         return editedItem;
     } catch (ex) {
         console.log(ex)
-        return ex;
+        throw ex;
     }
 }
 
@@ -82,6 +82,6 @@ async function addItem(em: EntityManager, item: Partial<Item>): Promise<Error | 
         return newItem;
     } catch (ex) {
         console.log(ex)
-        return ex;
+        throw ex;
     }
 }

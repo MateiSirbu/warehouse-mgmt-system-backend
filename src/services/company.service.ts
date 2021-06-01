@@ -11,7 +11,7 @@ async function getAllCompanies(em: EntityManager): Promise<Error | Company[]> {
         const companies = em.find(Company, {});
         return companies;
     } catch (ex) {
-        return ex;
+        throw ex;
     }
 }
 
@@ -25,7 +25,7 @@ async function getCompanyById(em: EntityManager, id: string): Promise<Error | Co
         const company = em.findOne(Company, { id: id });
         return company;
     } catch (ex) {
-        return ex;
+        throw ex;
     }
 }
 
@@ -39,7 +39,7 @@ async function getCompanyByName(em: EntityManager, name: string): Promise<Error 
         const company = await em.findOne(Company, { name: name }, { populate: true });
         return company;
     } catch (ex) {
-        return ex;
+        throw ex;
     }
 }
 
@@ -60,7 +60,7 @@ async function addCompany(em: EntityManager, company: Partial<Company>): Promise
         await em.persistAndFlush(item);
         return item;
     } catch (ex) {
-        return ex;
+        throw ex;
     }
 }
 

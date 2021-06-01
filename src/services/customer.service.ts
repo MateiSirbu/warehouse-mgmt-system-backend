@@ -22,7 +22,7 @@ async function getAllCustomers(em: EntityManager): Promise<Error | Customer[]> {
         const customers = await em.find(Customer, {});
         return customers;
     } catch (ex) {
-        return ex;
+        throw ex;
     }
 }
 
@@ -42,7 +42,7 @@ async function getCustomerByUserId(em: EntityManager, id: string): Promise<Error
         return customer;
     } catch (ex) {
         console.log(ex)
-        return ex;
+        throw ex;
     }
 }
 
@@ -59,7 +59,7 @@ async function getCustomerById(em: EntityManager, id: string): Promise<Error | C
         return customer;
     } catch (ex) {
         console.log(ex)
-        return ex;
+        throw ex;
     }
 }
 
@@ -79,7 +79,7 @@ async function getCustomerByEmail(em: EntityManager, email: string): Promise<Err
         return customer;
     } catch (ex) {
         console.log(ex)
-        return ex;
+        throw ex;
     }
 }
 
@@ -95,7 +95,7 @@ async function removeCustomer(em: EntityManager, email: string): Promise<Error |
         await em.removeAndFlush(customer);
     } catch (ex) {
         console.log(ex)
-        return ex;
+        throw ex;
     }
 }
 
@@ -113,7 +113,7 @@ async function updateCustomer(em: EntityManager, customer: Partial<Customer>, em
         return editedCustomer;
     } catch (ex) {
         console.log(ex)
-        return ex;
+        throw ex;
     }
 }
 
@@ -131,6 +131,6 @@ async function addCustomer(em: EntityManager, customer: Partial<Customer>, email
         return item;
     } catch (ex) {
         console.log(ex)
-        return ex;
+        throw ex;
     }
 }

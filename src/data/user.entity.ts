@@ -33,7 +33,7 @@ export class User {
     @OneToOne(() => Employee, employee => employee.user, { owner: true, eager: true })
     employee!: Employee;
 
-    @OneToMany(() => CartItem, cartItem => cartItem.user, { eager: true, cascade: [Cascade.ALL] })
+    @OneToMany(() => CartItem, cartItem => cartItem.user, { eager: true })
     cartItems = new Collection<CartItem>(this);
 
     public constructor(init?: Partial<User>) {
