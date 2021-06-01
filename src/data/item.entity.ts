@@ -1,5 +1,7 @@
-import { Entity, SerializedPrimaryKey, PrimaryKey, Property, Unique } from "@mikro-orm/core";
+import { LoadStrategy } from "@mikro-orm/core";
+import { Entity, SerializedPrimaryKey, PrimaryKey, Property, Unique, OneToMany, Cascade, Collection, wrap } from "@mikro-orm/core";
 import { ObjectId } from "mongodb";
+import { CartItem } from "./cartitem.entity";
 
 @Entity()
 export class Item {
@@ -27,6 +29,9 @@ export class Item {
 
     @Property()
     stock!: number;
+
+    @OneToMany(() => CartItem, cartItem => cartItem.item, { eager: true, cascade: [Cascade.ALL] })
+    cartItems? = new Collection<CartItem>(this);
 
     public constructor(init?: Partial<Item>) {
         Object.assign(this, init);

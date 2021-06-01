@@ -1,5 +1,6 @@
-import { Entity, SerializedPrimaryKey, PrimaryKey, Property, OneToOne } from "@mikro-orm/core";
+import { Entity, SerializedPrimaryKey, PrimaryKey, Property, OneToOne, OneToMany, Cascade, Collection, wrap, LoadStrategy } from "@mikro-orm/core";
 import { ObjectId } from "mongodb";
+import { CartItem } from "./cartitem.entity";
 import { Customer } from "./customer.entity";
 import { Employee } from "./employee.entity";
 
@@ -31,6 +32,9 @@ export class User {
 
     @OneToOne(() => Employee, employee => employee.user, { owner: true, eager: true })
     employee!: Employee;
+
+    @OneToMany(() => CartItem, cartItem => cartItem.user, { eager: true, cascade: [Cascade.ALL] })
+    cartItems = new Collection<CartItem>(this);
 
     public constructor(init?: Partial<User>) {
         Object.assign(this, init);

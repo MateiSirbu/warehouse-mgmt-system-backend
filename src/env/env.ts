@@ -8,5 +8,6 @@ export const env = Object.freeze({
     SIGNUP_ROUTE: "/signup",
     OOBE_ROUTE: "/oobe",
     COMPANY_ROUTE: "/company",
-    ITEM_ROUTE: "/item"
+    ITEM_ROUTE: "/item",
+    CART_ITEM_ROUTE: "/cart"
 })
