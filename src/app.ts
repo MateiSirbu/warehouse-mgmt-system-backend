@@ -9,7 +9,7 @@ import * as bodyParser from "body-parser";
 import { setOobeRoute } from "./routes/oobe.route";
 import { setCompanyRoute } from "./routes/company.route";
 import { setItemRoute } from "./routes/item.route";
-import { setCartItemRoute } from "./routes/cartitem.route";
+import { setCartRoute } from "./routes/cart.route";
 
 let app: express.Application;
 
@@ -35,7 +35,7 @@ const init = function (): express.Application {
     app.use(env.SIGNUP_ROUTE, setSignUpRoute(express.Router()));
     app.use(env.OOBE_ROUTE, setOobeRoute(express.Router()));
     app.use(env.ITEM_ROUTE, setItemRoute(express.Router()));
-    app.use(env.CART_ITEM_ROUTE, setCartItemRoute(express.Router()));
+    app.use(env.CART_ROUTE, setCartRoute(express.Router()));
 
     return app;
 }

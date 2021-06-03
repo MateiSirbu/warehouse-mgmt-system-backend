@@ -5,12 +5,12 @@ import { env } from "../env/env";
 import { IExpressRequest } from "../interfaces/IExpressRequest";
 import { User } from "../data/user.entity";
 import * as userService from "../services/user.service";
-import * as cartItemService from "../services/cartitem.service";
+import * as cartService from "../services/cart.service";
 import { EntityManager } from "@mikro-orm/core";
 import jwt_decode from "jwt-decode";
 import { CartItem } from "../data/cartitem.entity";
 
-export { setCartItemRoute };
+export { setCartRoute };
 
 const jwtVerify = expressjwt({
     secret: fs.readFileSync(env.JWT_PUBLIC_KEY),
@@ -23,7 +23,7 @@ const jwtVerify = expressjwt({
     }
 });
 
-function setCartItemRoute(router: Router): Router {
+function setCartRoute(router: Router): Router {
     router.post("/", jwtVerify, addCartItem);
     router.put("/", jwtVerify, editCartItem);
     router.get("/", jwtVerify, getCartItems);
@@ -64,8 +64,6 @@ async function checkIfEmployee(req: IExpressRequest, res: Response, next: NextFu
     }
 }
 
-
-
 async function addCartItem(req: IExpressRequest, res: Response, next: NextFunction) {
     if (!req.em || !(req.em instanceof EntityManager))
         return next(Error("EntityManager not available"));
@@ -78,7 +76,7 @@ async function addCartItem(req: IExpressRequest, res: Response, next: NextFuncti
         let userId = decoded.sub;
         user = await userService.getUserById(req.em, userId);
         if (user instanceof User) {
-            await cartItemService.addCartItem(req.em, req.body, user)
+            await cartService.addCartItem(req.em, req.body, user)
             return res.status(200).end();
         } else {
             res.statusMessage = "You are not logged in"
@@ -102,7 +100,7 @@ async function clearCart(req: IExpressRequest, res: Response, next: NextFunction
         let userId = decoded.sub;
         user = await userService.getUserById(req.em, userId);
         if (user instanceof User) {
-            await cartItemService.clearCart(req.em, user)
+            await cartService.clearCart(req.em, user)
             return res.status(200).end();
         } else {
             res.statusMessage = "You are not logged in"
@@ -126,11 +124,10 @@ async function deleteCartItem(req: IExpressRequest, res: Response, next: NextFun
         let userId = decoded.sub;
         user = await userService.getUserById(req.em, userId);
         if (user instanceof User) {
-            let cartItem = await cartItemService.getCartItem(req.em, req.params.id)
+            let cartItem = await cartService.getCartItem(req.em, req.params.id)
             if (cartItem instanceof CartItem) {
                 if (userId == cartItem.user.id) {
-                    console.log(req.params.id)
-                    await cartItemService.deleteCartItem(req.em, req.params.id)
+                    await cartService.deleteCartItem(req.em, req.params.id)
                     return res.status(200).end();
                 }
                 else {
@@ -152,7 +149,7 @@ async function editCartItem(req: IExpressRequest, res: Response, next: NextFunct
     if (!req.em || !(req.em instanceof EntityManager))
         return next(Error("EntityManager not available"));
     try {
-        await cartItemService.updateCartItem(req.em, req.body)
+        await cartService.updateCartItem(req.em, req.body)
         return res.status(200).end();
     } catch (ex) {
         res.statusMessage = ex.message;
@@ -172,7 +169,7 @@ async function getCartItems(req: IExpressRequest, res: Response, next: NextFunct
         let userId = decoded.sub;
         user = await userService.getUserById(req.em, userId);
         if (user instanceof User) {
-            let result = await cartItemService.getCartItemsByUser(req.em, user)
+            let result = await cartService.getCartItemsByUser(req.em, user)
             return res.status(200).json(result);
         } else {
             res.statusMessage = "You are not logged in"
