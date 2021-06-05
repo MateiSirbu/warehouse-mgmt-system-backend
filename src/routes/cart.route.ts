@@ -170,6 +170,7 @@ async function getCartItems(req: IExpressRequest, res: Response, next: NextFunct
         user = await userService.getUserById(req.em, userId);
         if (user instanceof User) {
             let result = await cartService.getCartItemsByUser(req.em, user)
+            console.log(result)
             return res.status(200).json(result);
         } else {
             res.statusMessage = "You are not logged in"

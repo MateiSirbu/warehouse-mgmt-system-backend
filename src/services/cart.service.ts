@@ -17,7 +17,7 @@ async function getCartItemsByUser(em: EntityManager, user: User): Promise<Error 
         throw Error("Invalid request");
 
     try {
-        const u = await em.findOneOrFail(User, { id: user.id }, { populate: true });
+        const u = await em.findOneOrFail(User, { id: user.id }, ['cartItems', 'cartItems.item']);
         return u.cartItems.loadItems()
     } catch (ex) {
         console.log(ex)
