@@ -35,7 +35,7 @@ async function clearCart(em: EntityManager, user: User): Promise<Error | void[]>
         return Promise.all(cartItems.map(async (item) => {
             await em.nativeDelete(CartItem, { id: item.id })
             await em.flush()
-            return;
+            return
         }));
     } catch (ex) {
         console.log(ex)

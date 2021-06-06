@@ -5,7 +5,7 @@ import { env } from "../env/env";
 import { IExpressRequest } from "../interfaces/IExpressRequest";
 import { User } from "../data/user.entity";
 import * as userService from "../services/user.service";
-import * as itemService from "../services/item.service";
+import * as customerOrderService from "../services/customerorder.service";
 import { EntityManager } from "@mikro-orm/core";
 import jwt_decode from "jwt-decode";
 
@@ -40,7 +40,7 @@ async function checkIfEmployee(req: IExpressRequest, res: Response, next: NextFu
         user = await userService.getUserById(req.em, userId);
         if (user instanceof User) {
             let employee = user.employee;
-            let isEmployee = employee != null;
+            let isEmployee = (employee != null);
             if (!isEmployee) {
                 return false;
             }
@@ -59,13 +59,25 @@ async function checkIfEmployee(req: IExpressRequest, res: Response, next: NextFu
 async function placeOrder(req: IExpressRequest, res: Response, next: NextFunction) {
     if (!req.em || !(req.em instanceof EntityManager))
         return next(Error("EntityManager not available"));
+
     try {
-        let isEmployee = checkIfEmployee(req, res, next)
-        if (isEmployee) {
-            await placeEmployeeOrder(req, res, next)
+        let isEmployee = await checkIfEmployee(req, res, next)
+        let idToken = req.headers.authorization!.split(' ')[1];
+        let decoded: any = jwt_decode(idToken);
+        let userId = decoded.sub;
+        let user = await userService.getUserById(req.em, userId);
+        if (user instanceof User) {
+            if (isEmployee) {
+                await placeEmployeeOrder(req, res, next, user)
+                return res.status(200).json()
+            }
+            else {
+                await placeCustomerOrder(req, res, next, user)
+                return res.status(200).json()
+            }
         }
         else {
-            await placeCustomerOrder(req, res, next)
+            return res.sendStatus(401);
         }
     } catch (ex) {
         res.statusMessage = ex.message;
@@ -73,28 +85,24 @@ async function placeOrder(req: IExpressRequest, res: Response, next: NextFunctio
     }
 }
 
-async function placeEmployeeOrder(req: IExpressRequest, res: Response, next: NextFunction) {
+async function placeEmployeeOrder(req: IExpressRequest, res: Response, next: NextFunction, user: User) {
     if (!req.em || !(req.em instanceof EntityManager))
         return next(Error("EntityManager not available"));
 
     try {
-        
-        return res.status(200).json("EMPLOYEE ORDER NOT IMPLEMENTED YET")
+
     } catch (ex) {
-        res.statusMessage = ex.message;
-        return res.sendStatus(500);
+        throw ex
     }
 }
 
-async function placeCustomerOrder(req: IExpressRequest, res: Response, next: NextFunction) {
+async function placeCustomerOrder(req: IExpressRequest, res: Response, next: NextFunction, user: User) {
     if (!req.em || !(req.em instanceof EntityManager))
         return next(Error("EntityManager not available"));
 
     try {
-
-        return res.status(200).json()
+        await customerOrderService.createOrder(req.em, user, req.body.address)
     } catch (ex) {
-        res.statusMessage = ex.message;
-        return res.sendStatus(500);
+        throw ex
     }
 }

@@ -27,6 +27,12 @@ export class CustomerOrder {
     lines = new Collection<COLine>(this);
 
     @Property()
+    address!: string
+
+    @Property()
+    date!: number
+
+    @Property()
     status!: OrderStatus
 
     public constructor(init?: Partial<CustomerOrder>) {

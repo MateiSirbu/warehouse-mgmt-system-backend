@@ -1,13 +1,15 @@
-import { EntityManager, wrap } from "@mikro-orm/core";
-import { Company } from "../data/company.entity";
-import { Customer } from "../data/customer.entity";
-import { CustomerOrder } from "../data/customerorder.entity";
+import { EntityManager } from "@mikro-orm/core";
+import { CartItem } from "../data/cartitem.entity";
+import { COLine } from "../data/coline.entity";
+
+import { CustomerOrder, OrderStatus } from "../data/customerorder.entity";
 import { User } from "../data/user.entity";
-import { getUserById } from "./user.service";
+import * as cartService from "../services/cart.service"
 
 export {
     getAllOrders,
-    getOrdersByUserId
+    getOrdersByUser,
+    createOrder
 };
 
 async function getAllOrders(em: EntityManager): Promise<Error | CustomerOrder[]> {
@@ -22,14 +24,12 @@ async function getAllOrders(em: EntityManager): Promise<Error | CustomerOrder[]>
     }
 }
 
-async function getOrdersByUserId(em: EntityManager, id: string): Promise<Error | CustomerOrder[]> {
+async function getOrdersByUser(em: EntityManager, u: User): Promise<Error | CustomerOrder[]> {
     if (!(em instanceof EntityManager))
         throw Error("Invalid request");
-    if (!id || typeof id !== "string")
-        throw Error("Malformed input");
 
     try {
-        const user = await em.findOne(User, { id: id });
+        const user = await em.findOne(User, { id: u.id });
         const customer = user!.customer
         if (customer != null) {
             const orders = customer.orders.toArray().map(item => em.create(CustomerOrder, item));
@@ -43,38 +43,36 @@ async function getOrdersByUserId(em: EntityManager, id: string): Promise<Error |
     }
 }
 
-async function updateCustomer(em: EntityManager, customer: Partial<Customer>, email: string): Promise<Error | Customer> {
+async function createOrder(em: EntityManager, u: User, a: string): Promise<Error | void> {
     if (!(em instanceof EntityManager))
         throw Error("Invalid request");
-    if (!customer || !customer.user || typeof customer !== "object" || typeof customer.user !== "object" || !customer.user?.email || email !== customer.user.email)
-        throw Error("Malformed input");
 
     try {
-        const user = await em.findOne(User, { email: email });
-        const editedCustomer = user!.customer;
-        wrap(editedCustomer).assign(customer);
-        await em.persistAndFlush(editedCustomer);
-        return editedCustomer;
+        let order = new CustomerOrder({
+            customer: u.customer,
+            status: OrderStatus.Placed,
+            address: a,
+            date: new Date().getTime()
+        })
+        await em.persistAndFlush(order);
+        let cartItems = await cartService.getCartItemsByUser(em, u)
+        if (Array.isArray(cartItems)) {
+            cartItems.forEach(async (cartItem) => {
+                let coLine = new COLine({
+                    order: order,
+                    item: cartItem.item,
+                    qty: cartItem.qty
+                })
+                await em.persistAndFlush(coLine)
+            });
+        }
+        else {
+            throw Error("Internal malfunction. Contact the system administrator")
+        }
+
     } catch (ex) {
         console.log(ex)
         throw ex;
     }
-}
 
-async function addCustomer(em: EntityManager, customer: Partial<Customer>, email: string): Promise<Error | Customer> {
-    if (!(em instanceof EntityManager))
-        throw Error("Invalid request");
-    if (!customer || typeof customer !== "object")
-        throw Error("Malformed input");
-    if (await getUserById(em, email) != null)
-        throw Error("E-mail address already associated with an account")
-
-    try {
-        const item = new Customer(customer);
-        await em.persistAndFlush(item);
-        return item;
-    } catch (ex) {
-        console.log(ex)
-        throw ex;
-    }
 }
