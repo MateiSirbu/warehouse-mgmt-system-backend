@@ -5,9 +5,11 @@ import { env } from "../env/env";
 import { IExpressRequest } from "../interfaces/IExpressRequest";
 import { User } from "../data/user.entity";
 import * as userService from "../services/user.service";
+import * as cartService from "../services/cart.service";
 import * as customerOrderService from "../services/customerorder.service";
 import { EntityManager } from "@mikro-orm/core";
 import jwt_decode from "jwt-decode";
+import { CustomerOrder } from "../data/customerorder.entity";
 
 export { setOrderRoute };
 
@@ -24,6 +26,8 @@ const jwtVerify = expressjwt({
 
 function setOrderRoute(router: Router): Router {
     router.post("/", jwtVerify, placeOrder);
+    router.get("/", jwtVerify, getOrders);
+    router.get("/:id", jwtVerify, getOrderById);
     return router;
 }
 
@@ -102,6 +106,85 @@ async function placeCustomerOrder(req: IExpressRequest, res: Response, next: Nex
 
     try {
         await customerOrderService.createOrder(req.em, user, req.body.address)
+        await cartService.clearCart(req.em, user)
+    } catch (ex) {
+        throw ex
+    }
+}
+
+async function getOrders(req: IExpressRequest, res: Response, next: NextFunction) {
+    if (!req.em || !(req.em instanceof EntityManager))
+        return next(Error("EntityManager not available"));
+
+    try {
+        let isEmployee = await checkIfEmployee(req, res, next)
+        let idToken = req.headers.authorization!.split(' ')[1];
+        let decoded: any = jwt_decode(idToken);
+        let userId = decoded.sub;
+        let user = await userService.getUserById(req.em, userId);
+        if (user instanceof User) {
+            if (isEmployee) {
+                // TODO: get all orders
+            }
+            else {
+                let result = await getCustomerOrders(req, res, next, user)
+                return res.status(200).json(result)
+            }
+        }
+        else {
+            return res.sendStatus(401);
+        }
+    } catch (ex) {
+        res.statusMessage = ex.message;
+        return res.sendStatus(500);
+    }
+}
+
+async function getOrderById(req: IExpressRequest, res: Response, next: NextFunction) {
+    if (!req.em || !(req.em instanceof EntityManager))
+        return next(Error("EntityManager not available"));
+
+    try {
+        let isEmployee = await checkIfEmployee(req, res, next)
+        let idToken = req.headers.authorization!.split(' ')[1];
+        let decoded: any = jwt_decode(idToken);
+        let userId = decoded.sub;
+        let user = await userService.getUserById(req.em, userId);
+        if (user instanceof User) {
+            let co = await customerOrderService.getCustomerOrderById(req.em, req.params.id)
+            if (co && co instanceof CustomerOrder) {
+                if (isEmployee) {
+                    return res.status(200).json(co)
+                }
+                else {
+                    if (co.customer.id == user.customer.id)
+                        return res.status(200).json(co)
+                    else {
+                        res.statusMessage = "You are not authorized to view this order"
+                        return res.sendStatus(401);
+                    }
+                }
+            }
+            else {
+                res.statusMessage = "Cannot find order"
+                return res.sendStatus(404);
+            }
+        }
+        else {
+            return res.sendStatus(401);
+        }
+    } catch (ex) {
+        res.statusMessage = ex.message;
+        return res.sendStatus(500);
+    }
+}
+
+async function getCustomerOrders(req: IExpressRequest, res: Response, next: NextFunction, user: User) {
+    if (!req.em || !(req.em instanceof EntityManager))
+        return next(Error("EntityManager not available"));
+
+    try {
+        return await customerOrderService.getOrdersByUser(req.em, user)
     } catch (ex) {
         throw ex
     }

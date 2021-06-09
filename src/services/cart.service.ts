@@ -34,7 +34,6 @@ async function clearCart(em: EntityManager, user: User): Promise<Error | void[]>
         const cartItems = u.cartItems.toArray().map(item => em.create(CartItem, item));
         return Promise.all(cartItems.map(async (item) => {
             await em.nativeDelete(CartItem, { id: item.id })
-            await em.flush()
             return
         }));
     } catch (ex) {
@@ -92,7 +91,6 @@ async function addCartItem(em: EntityManager, cartItem: Partial<CartItem>, user:
         throw Error("Malformed input");
 
     try {
-        console.log(cartItem)
         const newItem = new CartItem(cartItem);
         newItem.user = user;
         await em.persistAndFlush(newItem);

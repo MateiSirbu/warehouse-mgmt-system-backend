@@ -1,5 +1,4 @@
 import { EntityManager } from "@mikro-orm/core";
-import { CartItem } from "../data/cartitem.entity";
 import { COLine } from "../data/coline.entity";
 
 import { CustomerOrder, OrderStatus } from "../data/customerorder.entity";
@@ -9,7 +8,8 @@ import * as cartService from "../services/cart.service"
 export {
     getAllOrders,
     getOrdersByUser,
-    createOrder
+    createOrder,
+    getCustomerOrderById
 };
 
 async function getAllOrders(em: EntityManager): Promise<Error | CustomerOrder[]> {
@@ -43,36 +43,48 @@ async function getOrdersByUser(em: EntityManager, u: User): Promise<Error | Cust
     }
 }
 
+async function getCustomerOrderById(em: EntityManager, id: string): Promise<Error | CustomerOrder> {
+    if (!(em instanceof EntityManager))
+        throw Error("Invalid request");
+
+    try {
+        const co = await em.findOneOrFail(CustomerOrder, { id: id }, ['lines', 'lines.item']);
+        return co
+    } catch (ex) {
+        console.log(ex)
+        throw ex;
+    }
+}
+
 async function createOrder(em: EntityManager, u: User, a: string): Promise<Error | void> {
     if (!(em instanceof EntityManager))
         throw Error("Invalid request");
 
     try {
-        let order = new CustomerOrder({
-            customer: u.customer,
-            status: OrderStatus.Placed,
-            address: a,
-            date: new Date().getTime()
-        })
-        await em.persistAndFlush(order);
         let cartItems = await cartService.getCartItemsByUser(em, u)
         if (Array.isArray(cartItems)) {
-            cartItems.forEach(async (cartItem) => {
+            let order = new CustomerOrder({
+                customer: u.customer,
+                status: OrderStatus.Placed,
+                address: a,
+                date: new Date().getTime()
+            })
+            await Promise.all(cartItems.map(async (cartItem) => {
                 let coLine = new COLine({
                     order: order,
                     item: cartItem.item,
-                    qty: cartItem.qty
+                    qty: cartItem.qty,
+                    filledQty: 0
                 })
-                await em.persistAndFlush(coLine)
-            });
+                order.lines.add(coLine)
+            }));
+            return em.persistAndFlush(order);
         }
         else {
             throw Error("Internal malfunction. Contact the system administrator")
         }
-
     } catch (ex) {
         console.log(ex)
         throw ex;
     }
-
 }
