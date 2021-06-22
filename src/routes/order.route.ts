@@ -124,7 +124,8 @@ async function getOrders(req: IExpressRequest, res: Response, next: NextFunction
         let user = await userService.getUserById(req.em, userId);
         if (user instanceof User) {
             if (isEmployee) {
-                // TODO: get all orders
+                let result = await getAllOrders(req, res, next)
+                return res.status(200).json(result)
             }
             else {
                 let result = await getCustomerOrders(req, res, next, user)
@@ -185,6 +186,17 @@ async function getCustomerOrders(req: IExpressRequest, res: Response, next: Next
 
     try {
         return await customerOrderService.getOrdersByUser(req.em, user)
+    } catch (ex) {
+        throw ex
+    }
+}
+
+async function getAllOrders(req: IExpressRequest, res: Response, next: NextFunction) {
+    if (!req.em || !(req.em instanceof EntityManager))
+        return next(Error("EntityManager not available"));
+
+    try {
+        return await customerOrderService.getAllOrders(req.em)
     } catch (ex) {
         throw ex
     }

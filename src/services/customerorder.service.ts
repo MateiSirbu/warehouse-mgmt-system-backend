@@ -18,6 +18,7 @@ async function getAllOrders(em: EntityManager): Promise<Error | CustomerOrder[]>
 
     try {
         const orders = await em.find(CustomerOrder, {});
+        orders.sort((a, b) => (a.date > b.date) ? -1 : ((b.date > a.date) ? 1 : 0))
         return orders;
     } catch (ex) {
         throw ex;
@@ -33,6 +34,7 @@ async function getOrdersByUser(em: EntityManager, u: User): Promise<Error | Cust
         const customer = user!.customer
         if (customer != null) {
             const orders = customer.orders.toArray().map(item => em.create(CustomerOrder, item));
+            orders.sort((a, b) => (a.date > b.date) ? -1 : ((b.date > a.date) ? 1 : 0))
             return orders
         }
         else
@@ -44,6 +46,19 @@ async function getOrdersByUser(em: EntityManager, u: User): Promise<Error | Cust
 }
 
 async function getCustomerOrderById(em: EntityManager, id: string): Promise<Error | CustomerOrder> {
+    if (!(em instanceof EntityManager))
+        throw Error("Invalid request");
+
+    try {
+        const co = await em.findOneOrFail(CustomerOrder, { id: id }, ['lines', 'lines.item']);
+        return co
+    } catch (ex) {
+        console.log(ex)
+        throw ex;
+    }
+}
+
+async function cancelCustomerOrder(em: EntityManager, id: string): Promise<Error | CustomerOrder> {
     if (!(em instanceof EntityManager))
         throw Error("Invalid request");
 
