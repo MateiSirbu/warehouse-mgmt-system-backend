@@ -27,10 +27,10 @@ export class User {
     @Property()
     salt!: string;
 
-    @OneToOne(() => Customer, customer => customer.user, { owner: true, eager: true })
+    @OneToOne({ entity: () => Customer, inversedBy: customer => customer.user, eager: true, orphanRemoval: true })
     customer!: Customer;
 
-    @OneToOne(() => Employee, employee => employee.user, { owner: true, eager: true })
+    @OneToOne({ entity: () => Employee, inversedBy: employee => employee.user, eager: true, orphanRemoval: true })
     employee!: Employee;
 
     @OneToMany(() => CartItem, cartItem => cartItem.user, { eager: true })

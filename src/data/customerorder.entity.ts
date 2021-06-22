@@ -34,7 +34,6 @@ export class CustomerOrder {
 
     @Property()
     status!: OrderStatus
-
     public constructor(init?: Partial<CustomerOrder>) {
         Object.assign(this, init);
     }

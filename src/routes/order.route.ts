@@ -9,7 +9,7 @@ import * as cartService from "../services/cart.service";
 import * as customerOrderService from "../services/customerorder.service";
 import { EntityManager } from "@mikro-orm/core";
 import jwt_decode from "jwt-decode";
-import { CustomerOrder } from "../data/customerorder.entity";
+import { CustomerOrder, OrderStatus } from "../data/customerorder.entity";
 
 export { setOrderRoute };
 
@@ -26,6 +26,7 @@ const jwtVerify = expressjwt({
 
 function setOrderRoute(router: Router): Router {
     router.post("/", jwtVerify, placeOrder);
+    router.post("/:id", jwtVerify, editOrderStatus)
     router.get("/", jwtVerify, getOrders);
     router.get("/:id", jwtVerify, getOrderById);
     return router;
@@ -186,6 +187,39 @@ async function getCustomerOrders(req: IExpressRequest, res: Response, next: Next
 
     try {
         return await customerOrderService.getOrdersByUser(req.em, user)
+    } catch (ex) {
+        throw ex
+    }
+}
+
+async function editOrderStatus(req: IExpressRequest, res: Response, next: NextFunction) {
+    if (!req.em || !(req.em instanceof EntityManager))
+        return next(Error("EntityManager not available"));
+
+    try {
+        let status: OrderStatus = +req.body.status
+        if (true) {
+            await customerOrderService.editCustomerOrder(req.em, req.params.id, status)
+            let updateMessage = ""
+            switch (status) {
+                case OrderStatus.Cancelled:
+                    updateMessage = "The order has been cancelled."
+                    break
+                case OrderStatus.Closed:
+                    updateMessage = "The order has been closed."
+                    break
+                case OrderStatus.Placed:
+                    updateMessage = "The order has been placed."
+                    break
+                case OrderStatus.Processing:
+                    updateMessage = "The order is being processed."
+                    break
+            }
+            return res.status(200).json(updateMessage)
+        }
+        else {
+            return res.status(401).json()
+        }
     } catch (ex) {
         throw ex
     }

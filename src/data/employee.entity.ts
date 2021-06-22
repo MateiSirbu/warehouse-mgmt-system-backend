@@ -10,7 +10,7 @@ export class Employee {
     @SerializedPrimaryKey()
     id!: string;
 
-    @OneToOne(() => User, user => user.employee, { eager: true })
+    @OneToOne({ entity: () => User, mappedBy: user => user.employee, eager: true, orphanRemoval: true }) 
     user!: User;
 
     @Property()

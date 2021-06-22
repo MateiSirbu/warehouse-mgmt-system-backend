@@ -54,7 +54,7 @@ async function login(req: IExpressRequest, res: Response, next: NextFunction) {
             let isEmployee = user.employee != null;
             let isCustomer = user.customer != null;
             if (isEmployee) {
-                isAdmin = user.employee.isAdmin!
+                isAdmin = user.employee!.isAdmin!
             }
             const privateKey = fs.readFileSync(env.JWT_PRIVATE_KEY);
             if (validateCredentials(user, req.body.password)) {

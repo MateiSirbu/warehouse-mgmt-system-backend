@@ -1,4 +1,4 @@
-import { EntityManager } from "@mikro-orm/core";
+import { EntityManager, wrap } from "@mikro-orm/core";
 import { COLine } from "../data/coline.entity";
 
 import { CustomerOrder, OrderStatus } from "../data/customerorder.entity";
@@ -9,7 +9,8 @@ export {
     getAllOrders,
     getOrdersByUser,
     createOrder,
-    getCustomerOrderById
+    getCustomerOrderById,
+    editCustomerOrder
 };
 
 async function getAllOrders(em: EntityManager): Promise<Error | CustomerOrder[]> {
@@ -17,9 +18,13 @@ async function getAllOrders(em: EntityManager): Promise<Error | CustomerOrder[]>
         throw Error("Invalid request");
 
     try {
-        const orders = await em.find(CustomerOrder, {});
+        const orders = await em.find(CustomerOrder, {}, ['customer', 'customer.user']);
         orders.sort((a, b) => (a.date > b.date) ? -1 : ((b.date > a.date) ? 1 : 0))
-        return orders;
+        return Promise.all(orders.map(async co => {
+            let user = await em.findOneOrFail(User, { customer: co.customer })
+            co.customer.user = user
+            return co
+        }));
     } catch (ex) {
         throw ex;
     }
@@ -58,12 +63,15 @@ async function getCustomerOrderById(em: EntityManager, id: string): Promise<Erro
     }
 }
 
-async function cancelCustomerOrder(em: EntityManager, id: string): Promise<Error | CustomerOrder> {
+async function editCustomerOrder(em: EntityManager, id: string, status: OrderStatus): Promise<Error | CustomerOrder> {
     if (!(em instanceof EntityManager))
         throw Error("Invalid request");
 
     try {
         const co = await em.findOneOrFail(CustomerOrder, { id: id }, ['lines', 'lines.item']);
+        let newCo = new CustomerOrder({ status: status })
+        wrap(co).assign(newCo)
+        await em.persistAndFlush(co)
         return co
     } catch (ex) {
         console.log(ex)

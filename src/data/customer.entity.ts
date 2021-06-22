@@ -15,7 +15,7 @@ export class Customer {
     @ManyToOne(() => Company)
     company!: Company;
 
-    @OneToOne(() => User, user => user.customer, { eager: true })
+    @OneToOne({ entity: () => User, mappedBy: user => user.customer, eager: true })
     user!: User;
 
     @OneToMany(() => CustomerOrder, customerOrder => customerOrder.customer, { eager: true, cascade: [Cascade.ALL] })
