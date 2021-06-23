@@ -26,6 +26,7 @@ const jwtVerify = expressjwt({
 
 function setOrderRoute(router: Router): Router {
     router.post("/", jwtVerify, placeOrder);
+    router.post("/fill", jwtVerify, fillLine);
     router.post("/:id", jwtVerify, editOrderStatus)
     router.get("/", jwtVerify, getOrders);
     router.get("/:id", jwtVerify, getOrderById);
@@ -198,27 +199,38 @@ async function editOrderStatus(req: IExpressRequest, res: Response, next: NextFu
 
     try {
         let status: OrderStatus = +req.body.status
-        if (true) {
-            await customerOrderService.editCustomerOrder(req.em, req.params.id, status)
-            let updateMessage = ""
-            switch (status) {
-                case OrderStatus.Cancelled:
-                    updateMessage = "The order has been cancelled."
-                    break
-                case OrderStatus.Closed:
-                    updateMessage = "The order has been closed."
-                    break
-                case OrderStatus.Placed:
-                    updateMessage = "The order has been placed."
-                    break
-                case OrderStatus.Processing:
-                    updateMessage = "The order is being processed."
-                    break
-            }
-            return res.status(200).json(updateMessage)
+        if (status != OrderStatus.Cancelled && !checkIfEmployee(req, res, next)) {
+            throw Error("You do not have sufficient permissions to modify the status of this order")
         }
-        else {
-            return res.status(401).json()
+        await customerOrderService.editCustomerOrder(req.em, req.params.id, status)
+        switch (status) {
+            case OrderStatus.Cancelled:
+                return res.status(200).json("The order has been cancelled.")
+            case OrderStatus.Closed:
+                return res.status(200).json("The order has been closed.")
+            case OrderStatus.Placed:
+                return res.status(200).json("The order has been placed.")
+            case OrderStatus.Processing:
+                return res.status(200).json("The order is being processed.")
+        }
+    } catch (ex) {
+        throw ex
+    }
+}
+
+async function fillLine(req: IExpressRequest, res: Response, next: NextFunction) {
+    if (!req.em || !(req.em instanceof EntityManager))
+        return next(Error("EntityManager not available"));
+
+    if (!checkIfEmployee(req, res, next)) {
+        return res.status(401).json()
+    }
+
+    try {
+        console.log(req.body)
+        if (true) {
+            await customerOrderService.fillCOLine(req.em, req.body)
+            return res.status(200).json()
         }
     } catch (ex) {
         throw ex

@@ -31,6 +31,9 @@ export class Item {
     @Property()
     stock!: number;
 
+    @Property()
+    availableQty?: number;
+
     @OneToMany(() => CartItem, cartItem => cartItem.item, { eager: true, cascade: [Cascade.ALL] })
     cartItems = new Collection<CartItem>(this);
 

@@ -2,6 +2,7 @@ import { EntityManager, wrap } from "@mikro-orm/core";
 import { COLine } from "../data/coline.entity";
 
 import { CustomerOrder, OrderStatus } from "../data/customerorder.entity";
+import { Item } from "../data/item.entity";
 import { User } from "../data/user.entity";
 import * as cartService from "../services/cart.service"
 
@@ -10,7 +11,9 @@ export {
     getOrdersByUser,
     createOrder,
     getCustomerOrderById,
-    editCustomerOrder
+    editCustomerOrder,
+    computeItemReservedStock,
+    fillCOLine
 };
 
 async function getAllOrders(em: EntityManager): Promise<Error | CustomerOrder[]> {
@@ -50,6 +53,18 @@ async function getOrdersByUser(em: EntityManager, u: User): Promise<Error | Cust
     }
 }
 
+async function fillCOLine(em: EntityManager, line: COLine) {
+    if (!(em instanceof EntityManager))
+        throw Error("Invalid request");
+
+    try {
+
+    } catch (ex) {
+        console.log(ex)
+        throw ex;
+    }
+}
+
 async function getCustomerOrderById(em: EntityManager, id: string): Promise<Error | CustomerOrder> {
     if (!(em instanceof EntityManager))
         throw Error("Invalid request");
@@ -69,10 +84,37 @@ async function editCustomerOrder(em: EntityManager, id: string, status: OrderSta
 
     try {
         const co = await em.findOneOrFail(CustomerOrder, { id: id }, ['lines', 'lines.item']);
+        switch (status) {
+            case OrderStatus.Cancelled:
+                if (co.status != OrderStatus.Placed)
+                    throw Error("Since this order has been processed, it cannot be cancelled");
+                break;
+            //TODO: other cases
+        }
         let newCo = new CustomerOrder({ status: status })
         wrap(co).assign(newCo)
         await em.persistAndFlush(co)
         return co
+    } catch (ex) {
+        console.log(ex)
+        throw ex;
+    }
+}
+
+async function computeItemReservedStock(em: EntityManager, id: string): Promise<Error | number> {
+    if (!(em instanceof EntityManager))
+        throw Error("Invalid request");
+
+    try {
+        let reservedStock = 0
+        const item = await em.findOneOrFail(Item, { id: id })
+        const coLines = await em.find(COLine, { item: item });
+        await Promise.all(coLines.map(async (line) => {
+            const order = await em.findOneOrFail(CustomerOrder, { id: line.order.id })
+            if (order.status == OrderStatus.Processing)
+                reservedStock += line.filledQty
+        }));
+        return reservedStock
     } catch (ex) {
         console.log(ex)
         throw ex;
