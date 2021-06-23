@@ -5,6 +5,8 @@ import { CustomerOrder, OrderStatus } from "../data/customerorder.entity";
 import { Item } from "../data/item.entity";
 import { User } from "../data/user.entity";
 import * as cartService from "../services/cart.service"
+import * as itemService from "../services/item.service"
+import * as customerOrderService from "../services/customerorder.service"
 
 export {
     getAllOrders,
@@ -58,7 +60,28 @@ async function fillCOLine(em: EntityManager, line: COLine) {
         throw Error("Invalid request");
 
     try {
-
+        const dbLine = await em.findOneOrFail(COLine, { id: line.id });
+        if (line.filledQty > dbLine.qty)
+            throw Error("Specified reserved quantity greater than the requested quantity");
+        if (line.filledQty < 0)
+            throw Error("Specified reserved quantity should be greater than or equal to zero");
+        const item = await em.findOneOrFail(Item, { id: line.item.id });
+        const itemReservedQty = await computeItemReservedStock(em, item.id)
+        if (!(itemReservedQty instanceof Error)) {
+            const itemAvblQty = item.stock - itemReservedQty
+            let stockDiff = line.filledQty - dbLine.filledQty
+            if (stockDiff > itemAvblQty)
+                throw Error("Cannot reserve the quantity you specified, insufficient available stock");
+        }
+        let newDbLine = new COLine({ filledQty: line.filledQty })
+        wrap(dbLine).assign(newDbLine)
+        await em.persistAndFlush(dbLine)
+        if (dbLine.order.status == OrderStatus.Placed) {
+            let order = await customerOrderService.getCustomerOrderById(em, dbLine.order.id)
+            let newOrder = new CustomerOrder({ status: OrderStatus.Processing })
+            wrap(order).assign(newOrder)
+            await em.persistAndFlush(order)
+        }
     } catch (ex) {
         console.log(ex)
         throw ex;
@@ -89,7 +112,23 @@ async function editCustomerOrder(em: EntityManager, id: string, status: OrderSta
                 if (co.status != OrderStatus.Placed)
                     throw Error("Since this order has been processed, it cannot be cancelled");
                 break;
-            //TODO: other cases
+            case OrderStatus.Closed:
+                if (co.status == OrderStatus.Cancelled || co.status == OrderStatus.Placed)
+                    throw Error("No stock has been reserved, cannot close order");
+                const lines = co.lines.toArray().map(ln => em.create(COLine, ln));
+                for (let i = 0; i < lines.length; i++) {
+                    if (lines[i].filledQty != lines[i].qty)
+                        throw Error("Cannot close order, the order is not fulfilled completely");
+                }
+                for (let i = 0; i < lines.length; i++) {
+                    let item = await itemService.getItemById(em, lines[i].item.id)
+                    if (item instanceof Item) {
+                        let newItem = new Item({ stock: item.stock - lines[i].qty })
+                        wrap(item).assign(newItem)
+                        await em.persist(item)
+                    }
+                }
+                break
         }
         let newCo = new CustomerOrder({ status: status })
         wrap(co).assign(newCo)

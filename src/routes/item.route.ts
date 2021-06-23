@@ -6,7 +6,6 @@ import { IExpressRequest } from "../interfaces/IExpressRequest";
 import { User } from "../data/user.entity";
 import * as userService from "../services/user.service";
 import * as itemService from "../services/item.service";
-import * as customerOrderService from "../services/customerorder.service"
 import { EntityManager } from "@mikro-orm/core";
 import jwt_decode from "jwt-decode";
 

@@ -75,7 +75,6 @@ async function editCompany(em: EntityManager, company: Partial<Company>): Promis
         throw Error("Address cannot be null")
 
     try {
-        console.log(company)
         const item = await em.findOneOrFail(Company, { id: company.id });
         wrap(item).assign(company)
         await em.persistAndFlush(item)

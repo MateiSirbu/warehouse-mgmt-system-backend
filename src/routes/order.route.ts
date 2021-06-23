@@ -189,7 +189,8 @@ async function getCustomerOrders(req: IExpressRequest, res: Response, next: Next
     try {
         return await customerOrderService.getOrdersByUser(req.em, user)
     } catch (ex) {
-        throw ex
+        res.statusMessage = ex.message;
+        return res.sendStatus(500);
     }
 }
 
@@ -214,7 +215,8 @@ async function editOrderStatus(req: IExpressRequest, res: Response, next: NextFu
                 return res.status(200).json("The order is being processed.")
         }
     } catch (ex) {
-        throw ex
+        res.statusMessage = ex.message;
+        return res.sendStatus(500);
     }
 }
 
@@ -233,7 +235,8 @@ async function fillLine(req: IExpressRequest, res: Response, next: NextFunction)
             return res.status(200).json()
         }
     } catch (ex) {
-        throw ex
+        res.statusMessage = ex.message;
+        return res.sendStatus(500);
     }
 }
 
@@ -244,6 +247,7 @@ async function getAllOrders(req: IExpressRequest, res: Response, next: NextFunct
     try {
         return await customerOrderService.getAllOrders(req.em)
     } catch (ex) {
-        throw ex
+        res.statusMessage = ex.message;
+        return res.sendStatus(500);
     }
 }

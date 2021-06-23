@@ -21,8 +21,12 @@ async function getAllItems(em: EntityManager): Promise<Error | Item[]> {
                 let reservedStock = await customerOrderService.computeItemReservedStock(em, items[i].id)
                 if (typeof (reservedStock) == 'number') {
                     items[i].availableQty = items[i].stock - reservedStock
+                } else {
+                    throw Error("Malformed input");
                 }
             }
+        } else {
+            throw Error("Malformed input");
         }
         return items;
     } catch (ex) {
@@ -37,12 +41,17 @@ async function getItemById(em: EntityManager, id: string): Promise<Error | Item 
     if (!id || typeof id !== "string")
         throw Error("Malformed input");
     try {
-        const item = em.findOne(Item, { id: id });
+        console.log(id)
+        const item = await em.findOne(Item, { id: id });
         if (item instanceof Item) {
             let reservedStock = await customerOrderService.computeItemReservedStock(em, item.id)
             if (typeof (reservedStock) == 'number') {
                 item.availableQty = item.stock - reservedStock
+            } else {
+                throw Error("Malformed input");
             }
+        } else {
+            throw Error("Malformed input");
         }
         return item;
     } catch (ex) {
@@ -66,17 +75,29 @@ async function getItemBySKU(em: EntityManager, sku: string): Promise<Error | Ite
     }
 }
 
-async function updateItem(em: EntityManager, item: Partial<Item>): Promise<Error | Item> {
+async function updateItem(em: EntityManager, editedItem: Partial<Item>): Promise<Error | Item> {
     if (!(em instanceof EntityManager))
         throw Error("Invalid request");
-    if (!item || typeof item !== "object")
+    if (!editedItem || typeof editedItem !== "object")
         throw Error("Malformed input");
 
     try {
-        const editedItem = await em.findOneOrFail(Item, { id: item.id });
-        wrap(editedItem).assign(item);
-        await em.persistAndFlush(editedItem);
-        return editedItem;
+        const itemToEdit = await em.findOneOrFail(Item, { id: editedItem.id });
+        if (editedItem.stock != itemToEdit.stock) {
+            let reservedQty = await customerOrderService.computeItemReservedStock(em, itemToEdit.id)
+            if (typeof (reservedQty) == 'number') {
+                if (editedItem.stock != undefined) {
+                    if (reservedQty > editedItem.stock)
+                        throw Error("Cannot set stock on hand at a value lower than the total reserved quantity");
+                }
+                else {
+                    throw Error("Malformed input");
+                }
+            }
+        }
+        wrap(itemToEdit).assign(editedItem);
+        await em.persistAndFlush(itemToEdit);
+        return itemToEdit;
     } catch (ex) {
         console.log(ex)
         throw ex;
